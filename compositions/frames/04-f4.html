@@ -1,0 +1,172 @@
+<template>
+  
+  <div data-composition-id="04-f4" data-width="1080" data-height="1920" data-duration="21">
+    <style>
+      #stage {
+        position: absolute;
+        inset: 0;
+        container-type: size;
+        background: #111111;
+        overflow: hidden;
+      }
+      #g1_group {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        background: #111111;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        visibility: visible;
+      }
+      #g1_word {
+        font-family: "Barlow", sans-serif;
+        font-weight: 700;
+        font-size: 6cqw;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        color: #F0ECE5;
+        text-transform: lowercase;
+        white-space: nowrap;
+        will-change: opacity, transform;
+      }
+      #g1_ember {
+        margin-top: 3cqw;
+        width: 36px;
+        height: 2px;
+        background: #E85D26;
+        will-change: opacity, transform;
+      }
+      #g2_group {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        visibility: hidden;
+      }
+      .g2_panel {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        will-change: opacity;
+      }
+      #g2_base { background: #111111; opacity: 1; }
+      #g2_p0 { background: #111111; }
+      #g2_p1 { background: #E85D26; }
+      #g2_p2 { background: #111111; }
+      #g2_p3 { background: #E85D26; }
+      .g2_word {
+        font-family: "Barlow", sans-serif;
+        font-weight: 900;
+        font-size: 34cqw;
+        letter-spacing: -0.04em;
+        line-height: 0.88;
+        text-transform: lowercase;
+        white-space: nowrap;
+        will-change: transform;
+      }
+      #g2_w0, #g2_w2 { color: #F0ECE5; }
+      #g2_w1, #g2_w3 { color: #111111; }
+      .g2_glow {
+        position: absolute;
+        width: 90cqw;
+        height: 90cqw;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(232, 93, 38, 0.5) 0%, rgba(232, 93, 38, 0) 65%);
+        opacity: 0;
+        will-change: opacity, transform;
+      }
+      #g2_flash {
+        position: absolute;
+        inset: 0;
+        background: #FFFFFF;
+        opacity: 0;
+        pointer-events: none;
+        will-change: opacity;
+      }
+    </style>
+    <div id="stage">
+      <div id="g1_group">
+        <div id="g1_word">wait for it</div>
+        <div id="g1_ember"></div>
+      </div>
+      <div id="g2_group">
+        <div class="g2_panel" id="g2_base"></div>
+        <div class="g2_panel" id="g2_p0">
+          <div class="g2_glow" id="g2_glow0"></div>
+          <div class="g2_word" id="g2_w0">stop</div>
+        </div>
+        <div class="g2_panel" id="g2_p1">
+          <div class="g2_word" id="g2_w1">drop</div>
+        </div>
+        <div class="g2_panel" id="g2_p2">
+          <div class="g2_glow" id="g2_glow2"></div>
+          <div class="g2_word" id="g2_w2">stop</div>
+        </div>
+        <div class="g2_panel" id="g2_p3">
+          <div class="g2_word" id="g2_w3">cut</div>
+        </div>
+        <div id="g2_flash"></div>
+      </div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // ---- Group g1: negative-space hold, local [0, 8) ----
+      tl.set("#g1_group", { autoAlpha: 1 }, 0);
+
+      // Near-stillness: bare ember pulse + faint mark shimmer over the 8s hold.
+      tl.fromTo("#g1_ember", { opacity: 0.25 }, { opacity: 0.6, duration: 4, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0);
+      tl.fromTo("#g1_word", { opacity: 0.9 }, { opacity: 1, duration: 2, yoyo: true, repeat: 3, ease: "sine.inOut" }, 0);
+
+      // Sparse tick at the frame-local anchor (track ~101s): micro punch on the mark + ember flare.
+      tl.to("#g1_word", { scale: 1.03, duration: 0.09, ease: "power2.out" }, 6.0);
+      tl.to("#g1_word", { scale: 1, duration: 0.3, ease: "power2.inOut" }, 6.09);
+      tl.to("#g1_ember", { scaleX: 1.6, opacity: 0.9, duration: 0.09, ease: "power2.out" }, 6.0);
+      tl.to("#g1_ember", { scaleX: 1, opacity: 0.6, duration: 0.4, ease: "power2.inOut" }, 6.09);
+
+      // ---- 0ms group cut at local t=8 ----
+      tl.set("#g1_group", { autoAlpha: 0 }, 8);
+      tl.set("#g2_group", { autoAlpha: 1 }, 8);
+
+      // ---- Group g2: hard-stop strobe, local [8, 21) ----
+      // Anchors: 10.65 stop / 14.27 drop / 19.71 stop / 20.61 cut.
+      const stops = [
+        { t: 10.65, panel: "#g2_p0", word: "#g2_w0", glow: "#g2_glow0" },
+        { t: 14.27, panel: "#g2_p1", word: "#g2_w1", glow: null },
+        { t: 19.71, panel: "#g2_p2", word: "#g2_w2", glow: "#g2_glow2" },
+        { t: 20.61, panel: "#g2_p3", word: "#g2_w3", glow: null },
+      ];
+      let prev = "#g2_base";
+      stops.forEach((s) => {
+        // flash-cut: full white frame on the stop...
+        tl.set("#g2_flash", { opacity: 1 }, s.t);
+        // ...swap the revealed panel while white (~2 frames at 30fps)...
+        tl.set(prev, { opacity: 0 }, s.t + 0.03);
+        tl.set(s.panel, { opacity: 1 }, s.t + 0.03);
+        // ...snap the flash back out.
+        tl.set("#g2_flash", { opacity: 0 }, s.t + 0.06);
+        // braam-punch: word scale punch with elastic settle.
+        tl.fromTo(s.word, { scale: 0.92 }, { scale: 1.18, duration: 0.12, ease: "power4.out" }, s.t + 0.03);
+        tl.to(s.word, { scale: 1, duration: 0.5, ease: "elastic.out(1, 0.5)" }, s.t + 0.15);
+        // ember glow flare on the dark panels, then stillness.
+        if (s.glow) {
+          tl.fromTo(s.glow, { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power3.out" }, s.t + 0.03);
+          tl.to(s.glow, { opacity: 0.25, scale: 1.2, duration: 0.9, ease: "power2.out" }, s.t + 0.15);
+        }
+        prev = s.panel;
+      });
+
+      // Final state: last word ("cut", orange register) holds to the frame end.
+      tl.set("#g2_group", { autoAlpha: 0 }, 21);
+
+      window.__timelines["04-f4"] = tl;
+      tl.seek(0);
+    </script>
+  </div>
+</template>

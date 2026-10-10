@@ -1,0 +1,638 @@
+<template id="tpl-03-f3">
+  <div id="stage" data-composition-id="03-f3" data-width="1080" data-height="1920" data-duration="42">
+    
+    <style>
+      #stage,
+      #stage * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      #stage {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #111111;
+        container-type: size;
+        font-family: "Barlow", "Helvetica Neue", Arial, sans-serif;
+      }
+      /* ── group containers ─────────────────────────────────────────── */
+      #g1,
+      #g2,
+      #g3 {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+      #g1 {
+        background: #111111;
+      }
+      #g2 {
+        background: #111111;
+      }
+      #g3 {
+        background: #111111;
+      }
+      /* ── g1 · poster-tile mosaic fork (1080x1920) ──────────────────── */
+      #g1_wall {
+        position: absolute;
+        inset: 0;
+      }
+      .g1-tile {
+        position: absolute;
+        display: flex;
+        align-items: flex-end;
+        overflow: hidden;
+        will-change: transform, opacity;
+        backface-visibility: hidden;
+      }
+      .g1-label {
+        font-family: "Barlow", "Helvetica Neue", Arial, sans-serif;
+        font-weight: 900;
+        line-height: 0.95;
+        letter-spacing: -0.03em;
+        padding: 0.5em 0.55em;
+        word-break: break-word;
+      }
+      .g1-chrome {
+        position: absolute;
+        left: 48px;
+        right: 48px;
+        bottom: 44px;
+        display: flex;
+        justify-content: space-between;
+        font-family: "IBM Plex Mono", monospace;
+        font-weight: 500;
+        font-size: 26px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #888880;
+        pointer-events: none;
+      }
+      .g1-chrome .accent {
+        color: #e85d26;
+      }
+      /* ── g2 · content-swap + chromatic-split ───────────────────────── */
+      .g2-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .g2-stack {
+        position: relative;
+        font-weight: 900;
+        font-size: 230px;
+        letter-spacing: -0.04em;
+        line-height: 0.95;
+        white-space: nowrap;
+      }
+      .g2-spacer {
+        color: transparent;
+      }
+      .g2-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        mix-blend-mode: screen;
+        will-change: transform;
+      }
+      #g2_base {
+        color: #f0ece5;
+      }
+      #g2_lo {
+        color: #e85d26;
+      }
+      #g2_lg {
+        color: #888880;
+      }
+      .g2-chrome {
+        position: absolute;
+        left: 48px;
+        right: 48px;
+        bottom: 44px;
+        display: flex;
+        justify-content: space-between;
+        font-family: "IBM Plex Mono", monospace;
+        font-weight: 500;
+        font-size: 26px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #888880;
+        pointer-events: none;
+      }
+      .g2-chrome .accent {
+        color: #e85d26;
+      }
+      /* ── g3 · bg-flow-field + mask-reveal ──────────────────────────── */
+      #g3_field {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        display: block;
+      }
+      .g3-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 90px;
+      }
+      .g3-maskwrap {
+        position: relative;
+        overflow: hidden;
+        padding: 0 40px;
+      }
+      .g3-hero {
+        font-weight: 900;
+        font-size: 150px;
+        letter-spacing: -0.04em;
+        line-height: 0.95;
+        color: #f0ece5;
+        white-space: nowrap;
+      }
+      .g3-maskclip {
+        clip-path: inset(0 100% 0 0);
+        will-change: clip-path;
+      }
+      .g3-sweep {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 8px;
+        background: #e85d26;
+        box-shadow:
+          0 0 40px #e85d26,
+          0 0 80px #e85d26;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+    </style>
+
+    <!-- ══ GROUP g1 · poster-tile-mosaic · local [0,9) · track 53–62 ══ -->
+    <div id="g1">
+      <div id="g1_wall"></div>
+      <div class="g1-chrome">
+        <span>no. 03</span>
+        <span><span class="accent">surge</span> / groove / peak</span>
+      </div>
+    </div>
+
+    <!-- ══ GROUP g2 · content-swap + chromatic-split · local [9,26) ══ -->
+    <div id="g2">
+      <div class="g2-center">
+        <div class="g2-stack">
+          <span class="g2-spacer">letup</span>
+          <span class="g2-layer" id="g2_base">no</span>
+          <span class="g2-layer" id="g2_lo" aria-hidden="true">no</span>
+          <span class="g2-layer" id="g2_lg" aria-hidden="true">no</span>
+        </div>
+      </div>
+      <div class="g2-chrome">
+        <span><span class="accent">no letup</span></span>
+        <span>62–79s</span>
+      </div>
+    </div>
+
+    <!-- ══ GROUP g3 · bg-flow-field + mask-reveal · local [26,42) ══ -->
+    <div id="g3">
+      <canvas id="g3_field" width="1080" height="1920"></canvas>
+      <div class="g3-center">
+        <div class="g3-maskwrap" id="g3_ph1w">
+          <div class="g3-hero g3-maskclip" id="g3_ph1">breathe</div>
+          <div class="g3-sweep" id="g3_sw1"></div>
+        </div>
+        <div class="g3-maskwrap" id="g3_ph2w">
+          <div class="g3-hero g3-maskclip" id="g3_ph2">again</div>
+          <div class="g3-sweep" id="g3_sw2"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        var tl = gsap.timeline({ paused: true });
+
+        /* ══════════════════════════════════════════════════════════════
+           G1 · poster-tile-mosaic fork — broadside palette, 1080x1920
+           accumulate 53–56 (local 0–3) → groove recolors 3.59 / 7.21
+           → locked peak recolor 8.12. 0ms group cuts at 9 / 26.
+           ══════════════════════════════════════════════════════════════ */
+        var g1_wall = document.getElementById("g1_wall");
+        var G1N = 12,
+          G1GAP = 8,
+          G1MARGIN = 48;
+        var G1W = 1080 - G1MARGIN * 2,
+          G1H = 1920 - G1MARGIN * 2;
+        var G1_LABELS = ["surge", "groove", "peak"];
+        var G1_THEMES = [
+          ["#1A1A18", "#282826", "#111111", "#505048"], // 0 darks — accumulate
+          ["#E85D26", "#1A1A18", "#282826", "#F0ECE5"], // 1 orange enters — groove
+          ["#F0ECE5", "#888880", "#E85D26", "#1A1A18"], // 2 cream — groove
+          ["#E85D26", "#E85D26", "#1A1A18", "#E85D26"], // 3 orange lock — peak
+        ];
+        function g1_themeColor(t, slot) {
+          var pal = G1_THEMES[((t % G1_THEMES.length) + G1_THEMES.length) % G1_THEMES.length];
+          return pal[slot % pal.length];
+        }
+        function g1_contrast(hex) {
+          var h = hex.replace("#", "");
+          var r = parseInt(h.substr(0, 2), 16),
+            g = parseInt(h.substr(2, 2), 16),
+            b = parseInt(h.substr(4, 2), 16);
+          return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#111111" : "#F0ECE5";
+        }
+        function g1_packMosaic(n, W, H) {
+          var rects = [{ x: 0, y: 0, w: W, h: H }];
+          while (rects.length < n) {
+            var bi = 0;
+            for (var i = 1; i < rects.length; i++) {
+              if (rects[i].w * rects[i].h > rects[bi].w * rects[bi].h) bi = i;
+            }
+            var r = rects.splice(bi, 1)[0];
+            var ratio = 0.4 + ((rects.length * 37) % 21) / 100; // deterministic
+            if (r.w >= r.h) {
+              var w1 = Math.round(r.w * ratio);
+              rects.push({ x: r.x, y: r.y, w: w1, h: r.h });
+              rects.push({ x: r.x + w1, y: r.y, w: r.w - w1, h: r.h });
+            } else {
+              var h1 = Math.round(r.h * ratio);
+              rects.push({ x: r.x, y: r.y, w: r.w, h: h1 });
+              rects.push({ x: r.x, y: r.y + h1, w: r.w, h: r.h - h1 });
+            }
+          }
+          return rects;
+        }
+        var g1_rects = g1_packMosaic(G1N, G1W, G1H);
+        var g1_tiles = [];
+        for (var gi = 0; gi < G1N; gi++) {
+          var R = g1_rects[gi];
+          var el = document.createElement("div");
+          el.className = "g1-tile";
+          el.style.left = G1MARGIN + R.x + G1GAP / 2 + "px";
+          el.style.top = G1MARGIN + R.y + G1GAP / 2 + "px";
+          el.style.width = Math.max(1, R.w - G1GAP) + "px";
+          el.style.height = Math.max(1, R.h - G1GAP) + "px";
+          el.style.backgroundColor = g1_themeColor(0, gi);
+          var lab = document.createElement("span");
+          lab.className = "g1-label";
+          lab.textContent = G1_LABELS[gi % G1_LABELS.length];
+          lab.style.color = g1_contrast(g1_themeColor(0, gi));
+          lab.style.fontSize = Math.round(Math.min(R.w, R.h) * 0.16) + "px";
+          el.appendChild(lab);
+          g1_wall.appendChild(el);
+          g1_tiles.push({
+            el: el,
+            label: lab,
+            idx: gi,
+            cx: R.x + R.w / 2,
+            cy: R.y + R.h / 2,
+          });
+        }
+        var g1_enterOrder = g1_tiles
+          .map(function (t) {
+            return t.idx;
+          })
+          .sort(function (a, b) {
+            return g1_tiles[b].cx - g1_tiles[b].cy - (g1_tiles[a].cx - g1_tiles[a].cy);
+          });
+        function g1_jitter(i) {
+          return { x: (((i * 37) % 7) - 3) * 16, y: (((i * 53) % 7) - 3) * 16 };
+        }
+        function g1_beatAt(i, n, beats) {
+          return beats[Math.min(beats.length - 1, Math.floor((i * beats.length) / n))];
+        }
+        function g1_lockedRecolor(t, themeIdx) {
+          for (var i = 0; i < G1N; i++) {
+            var col = g1_themeColor(themeIdx, i);
+            tl.set(g1_tiles[i].el, { backgroundColor: col }, t);
+            tl.set(g1_tiles[i].label, { color: g1_contrast(col) }, t);
+          }
+        }
+        gsap.set(
+          g1_tiles.map(function (t) {
+            return t.el;
+          }),
+          { autoAlpha: 0 },
+        );
+        // accumulate 53–56 → local 0–3.169 (surge)
+        var G1_ENTER = [0.429, 0.894, 1.358, 1.799, 2.263, 2.705, 3.169];
+        g1_enterOrder.forEach(function (i, k) {
+          var t = g1_beatAt(k, G1N, G1_ENTER);
+          var col = g1_themeColor(0, i);
+          tl.set(g1_tiles[i].el, { backgroundColor: col }, t);
+          tl.set(g1_tiles[i].label, { color: g1_contrast(col) }, t);
+          var d = g1_jitter(i);
+          tl.fromTo(
+            g1_tiles[i].el,
+            { autoAlpha: 0, scale: 0.78, x: d.x, y: d.y },
+            {
+              autoAlpha: 1,
+              scale: 1,
+              x: 0,
+              y: 0,
+              duration: 0.12,
+              ease: "back.out(1.7)",
+              overwrite: "auto",
+              immediateRender: false,
+            },
+            t,
+          );
+        });
+        // sustain groove — locked recolors on the groove beats
+        g1_lockedRecolor(3.59, 1);
+        g1_lockedRecolor(7.21, 2);
+        // peak — locked orange recolor
+        g1_lockedRecolor(8.12, 3);
+
+        /* ══════════════════════════════════════════════════════════════
+           G2 · free-compose: per-onset content-swap (hard 0ms tl.set
+           cycling copy order) + chromatic-split riding the groove.
+           anchors local: 9.04, 13.57, 14.5, 17.19, 21.815
+           ══════════════════════════════════════════════════════════════ */
+        var G2_WORDS = ["no", "letup"]; // deterministic from copy order
+        var G2_ANCHORS = [9.04, 13.57, 14.5, 17.19, 21.815];
+        var g2_targets = ["#g2_base", "#g2_lo", "#g2_lg"];
+        gsap.set(g2_targets, { x: 0 });
+        tl.set(g2_targets, { textContent: "no" }, 9);
+        tl.set("#g2_lo", { x: -3, opacity: 0.7 }, 9);
+        tl.set("#g2_lg", { x: 3, opacity: 0.7 }, 9);
+        // sustain shimmer across the groove (opacity only — never fights x spikes)
+        tl.fromTo(
+          "#g2_lo",
+          { opacity: 0.5 },
+          {
+            opacity: 0.9,
+            duration: 1.6,
+            ease: "sine.inOut",
+            repeat: -1,
+            yoyo: true,
+            immediateRender: false,
+          },
+          9,
+        );
+        G2_ANCHORS.forEach(function (a, k) {
+          var w = G2_WORDS[k % G2_WORDS.length];
+          tl.set(g2_targets, { textContent: w }, a); // 0ms content-swap
+          tl.to("#g2_lo", { x: -26, duration: 0.05, ease: "steps(1)", overwrite: "auto" }, a);
+          tl.to("#g2_lg", { x: 26, duration: 0.05, ease: "steps(1)", overwrite: "auto" }, a);
+          tl.to("#g2_lo", { x: -3, duration: 0.45, ease: "power2.out", overwrite: "auto" }, a + 0.06);
+          tl.to("#g2_lg", { x: 3, duration: 0.45, ease: "power2.out", overwrite: "auto" }, a + 0.06);
+        });
+
+        /* ══════════════════════════════════════════════════════════════
+           G3 · bg-flow-field (curl-noise shader, broadside palette)
+           + mask-reveal phrases: "breathe" @26, "again" @36.35,
+           dip @29.059, rebuild @36.35. density: breathe.
+           ══════════════════════════════════════════════════════════════ */
+        var g3_canvas = document.getElementById("g3_field");
+        var g3_render = null;
+        try {
+          var gl = g3_canvas.getContext("webgl", {
+            antialias: false,
+            alpha: false,
+            preserveDrawingBuffer: true,
+          });
+          var G3_VERT = [
+            "attribute vec2 position;",
+            "varying vec2 vUv;",
+            "void main(){",
+            "  vUv = position * 0.5 + 0.5;",
+            "  gl_Position = vec4(position, 0.0, 1.0);",
+            "}",
+          ].join("\n");
+          var G3_FRAG = [
+            "precision highp float;",
+            "varying vec2 vUv;",
+            "uniform float uTime;",
+            "uniform float uPhase;",
+            "uniform float uReveal;",
+            "uniform float uChromAb;",
+            "uniform float uVignette;",
+            "uniform float uIntensity;",
+            "uniform float uSpeed;",
+            "uniform vec2  uResolution;",
+            "uniform vec3  uColLow;",
+            "uniform vec3  uColMid;",
+            "uniform vec3  uColHigh;",
+            "uniform vec3  uAccent;",
+            "float hash21(vec2 p){",
+            "  p = fract(p * vec2(123.34, 456.21));",
+            "  p += dot(p, p + 45.32);",
+            "  return fract(p.x * p.y);",
+            "}",
+            "float noise2(vec2 p){",
+            "  vec2 i = floor(p);",
+            "  vec2 f = fract(p);",
+            "  vec2 u = f * f * (3.0 - 2.0 * f);",
+            "  float a = hash21(i);",
+            "  float b = hash21(i + vec2(1.0, 0.0));",
+            "  float c = hash21(i + vec2(0.0, 1.0));",
+            "  float d = hash21(i + vec2(1.0, 1.0));",
+            "  return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);",
+            "}",
+            "float fbm(vec2 p){",
+            "  float v = 0.0;",
+            "  float a = 0.5;",
+            "  for(int i=0;i<5;i++){",
+            "    v += a * noise2(p);",
+            "    p *= 2.02;",
+            "    a *= 0.5;",
+            "  }",
+            "  return v;",
+            "}",
+            "vec2 curl(vec2 p, float t){",
+            "  float e = 0.6;",
+            "  float n1 = fbm(p + vec2(0.0,  e) + t*0.18);",
+            "  float n2 = fbm(p + vec2(0.0, -e) + t*0.18);",
+            "  float n3 = fbm(p + vec2( e, 0.0) + t*0.18);",
+            "  float n4 = fbm(p + vec2(-e, 0.0) + t*0.18);",
+            "  return vec2(n1 - n2, -(n3 - n4));",
+            "}",
+            "vec3 palette(float t){",
+            "  t = clamp(t, 0.0, 1.0);",
+            "  vec3 lowMid = mix(uColLow, uColMid, smoothstep(0.0, 0.5, t));",
+            "  return mix(lowMid, uColHigh, smoothstep(0.5, 1.0, t));",
+            "}",
+            "vec3 sampleField(vec2 uv, float t, float energy){",
+            "  vec2 p = (uv - 0.5) * vec2(uResolution.x/uResolution.y, 1.0) * 2.4;",
+            "  vec2 c = curl(p * 0.9, t);",
+            "  vec2 q = p + c * (0.45 + 0.55 * energy);",
+            "  float flow = fbm(q * 1.6 + vec2(t * 0.11, -t * 0.07));",
+            "  float bands = sin(flow * 14.0 + t * 1.1);",
+            "  bands = smoothstep(0.0, 1.0, 0.5 + 0.5 * bands);",
+            "  float r = length(p);",
+            "  float core = smoothstep(1.5, 0.05, r) * (0.6 + 0.4 * energy);",
+            "  float glow = exp(-r * 1.6) * (0.55 + 0.45 * energy);",
+            "  float k = clamp(flow * 0.85 + 0.15 * bands + 0.25 * core + 0.6 * glow, 0.0, 1.4);",
+            "  vec3 col = palette(k * 0.9 + 0.1 * sin(t * 0.4));",
+            "  col *= 0.7 + 0.6 * energy;",
+            "  col += uAccent * core * 0.55;",
+            "  return col;",
+            "}",
+            "void main(){",
+            "  vec2 uv = vUv;",
+            "  float t = uTime * uSpeed;",
+            "  float e = uIntensity;",
+            "  vec2 dir = normalize(uv - 0.5 + 1e-6);",
+            "  float ca = uChromAb * (0.004 + 0.012 * length(uv - 0.5));",
+            "  vec3 cR = sampleField(uv + dir * ca, t, e);",
+            "  vec3 cG = sampleField(uv,            t, e);",
+            "  vec3 cB = sampleField(uv - dir * ca, t, e);",
+            "  vec3 col = vec3(cR.r, cG.g, cB.b);",
+            "  float lum = dot(col, vec3(0.299, 0.587, 0.114));",
+            "  col = mix(vec3(lum), col, 1.05);",
+            "  float rev = uReveal;",
+            "  float sweep = smoothstep(0.0, 0.6, rev) * (1.0 - smoothstep(0.6, 1.0, rev));",
+            "  col += uColHigh * sweep * 0.35;",
+            "  vec3 phaseTint = mix(vec3(0.85, 0.92, 1.05), vec3(1.05, 0.95, 0.85), uPhase);",
+            "  col *= phaseTint;",
+            "  float v = length(uv - 0.5);",
+            "  col *= 1.0 - smoothstep(0.45, 0.95, v) * uVignette;",
+            "  col = col / (col + 1.0);",
+            "  col = pow(col, vec3(1.0/2.2));",
+            "  gl_FragColor = vec4(col, 1.0);",
+            "}",
+          ].join("\n");
+          function g3_compile(type, src) {
+            var s = gl.createShader(type);
+            gl.shaderSource(s, src);
+            gl.compileShader(s);
+            return s;
+          }
+          var g3_prog = gl.createProgram();
+          gl.attachShader(g3_prog, g3_compile(gl.VERTEX_SHADER, G3_VERT));
+          gl.attachShader(g3_prog, g3_compile(gl.FRAGMENT_SHADER, G3_FRAG));
+          gl.linkProgram(g3_prog);
+          gl.useProgram(g3_prog);
+          var g3_buf = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, g3_buf);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+          var g3_pos = gl.getAttribLocation(g3_prog, "position");
+          gl.enableVertexAttribArray(g3_pos);
+          gl.vertexAttribPointer(g3_pos, 2, gl.FLOAT, false, 0, 0);
+          gl.viewport(0, 0, 1080, 1920);
+          var g3_L = function (n) {
+            return gl.getUniformLocation(g3_prog, n);
+          };
+          var g3_uLoc = {
+            uTime: g3_L("uTime"),
+            uPhase: g3_L("uPhase"),
+            uReveal: g3_L("uReveal"),
+            uChromAb: g3_L("uChromAb"),
+            uVignette: g3_L("uVignette"),
+            uIntensity: g3_L("uIntensity"),
+            uSpeed: g3_L("uSpeed"),
+            uResolution: g3_L("uResolution"),
+            uColLow: g3_L("uColLow"),
+            uColMid: g3_L("uColMid"),
+            uColHigh: g3_L("uColHigh"),
+            uAccent: g3_L("uAccent"),
+          };
+          function g3_hexLin(hex) {
+            var h = String(hex).replace("#", "").trim();
+            var r = parseInt(h.substr(0, 2), 16) / 255;
+            var g = parseInt(h.substr(2, 2), 16) / 255;
+            var b = parseInt(h.substr(4, 2), 16) / 255;
+            var lin = function (c) {
+              return Math.pow(c, 2.2);
+            };
+            return [lin(r), lin(g), lin(b)];
+          }
+          var g3_u = {
+            uTime: { value: 0 },
+            uPhase: { value: 0.1 },
+            uReveal: { value: 0 },
+            uChromAb: { value: 0.25 },
+            uVignette: { value: 0.35 },
+            uIntensity: { value: 0.55 },
+          };
+          var g3_cLow = g3_hexLin("#111111");
+          var g3_cMid = g3_hexLin("#505048");
+          var g3_cHigh = g3_hexLin("#F0ECE5");
+          var g3_cAcc = g3_hexLin("#E85D26");
+          g3_render = function () {
+            gl.uniform1f(g3_uLoc.uTime, g3_u.uTime.value);
+            gl.uniform1f(g3_uLoc.uPhase, g3_u.uPhase.value);
+            gl.uniform1f(g3_uLoc.uReveal, g3_u.uReveal.value);
+            gl.uniform1f(g3_uLoc.uChromAb, g3_u.uChromAb.value);
+            gl.uniform1f(g3_uLoc.uVignette, g3_u.uVignette.value);
+            gl.uniform1f(g3_uLoc.uIntensity, g3_u.uIntensity.value);
+            gl.uniform1f(g3_uLoc.uSpeed, 0.6);
+            gl.uniform2f(g3_uLoc.uResolution, 1080, 1920);
+            gl.uniform3fv(g3_uLoc.uColLow, g3_cLow);
+            gl.uniform3fv(g3_uLoc.uColMid, g3_cMid);
+            gl.uniform3fv(g3_uLoc.uColHigh, g3_cHigh);
+            gl.uniform3fv(g3_uLoc.uAccent, g3_cAcc);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+          };
+          g3_render();
+          tl.eventCallback("onUpdate", g3_render);
+          // slow time base across the whole g3 span
+          tl.to(g3_u.uTime, { value: 16, duration: 16, ease: "none" }, 26);
+          // settle-in → dip (29.059) → rebuild (36.35) → settle
+          tl.to(g3_u.uIntensity, { value: 0.7, duration: 3, ease: "sine.inOut" }, 26);
+          tl.to(g3_u.uIntensity, { value: 0.22, duration: 2.5, ease: "sine.inOut" }, 29.059);
+          tl.to(g3_u.uIntensity, { value: 0.95, duration: 1.8, ease: "power2.in" }, 36.35);
+          tl.to(g3_u.uIntensity, { value: 0.75, duration: 3.8, ease: "sine.out" }, 38.2);
+          tl.to(g3_u.uChromAb, { value: 0.1, duration: 2, ease: "sine.inOut" }, 29.059);
+          tl.to(g3_u.uChromAb, { value: 0.9, duration: 0.6, ease: "power3.in" }, 36.35);
+          tl.to(g3_u.uChromAb, { value: 0.3, duration: 3, ease: "power2.out" }, 37.0);
+          tl.to(g3_u.uVignette, { value: 0.6, duration: 2.5, ease: "sine.inOut" }, 29.059);
+          tl.to(g3_u.uVignette, { value: 0.4, duration: 2.5, ease: "sine.inOut" }, 36.35);
+          tl.to(g3_u.uPhase, { value: 0.5, duration: 16, ease: "sine.inOut" }, 26);
+          // highlight sweep flash on the rebuild
+          tl.fromTo(g3_u.uReveal, { value: 0 }, { value: 1, duration: 0.7, ease: "none" }, 36.35);
+          tl.set(g3_u.uReveal, { value: 0 }, 37.1);
+        } catch (e) {
+          g3_canvas.style.display = "none"; // no WebGL → flat ink ground stays
+        }
+
+        // mask-reveal phrases (port of the primitive recipe, orange sweep)
+        function g3_reveal(clipSel, sweepSel, t0, travel) {
+          tl.set(clipSel, { clipPath: "inset(0 100% 0 0)" }, t0);
+          tl.set(sweepSel, { x: 0, opacity: 0 }, t0);
+          tl.to(sweepSel, { opacity: 1, duration: 0.08, ease: "power2.out" }, t0 + 0.1);
+          tl.to(sweepSel, { x: travel, duration: 0.75, ease: "expo.out" }, t0 + 0.15);
+          tl.to(
+            clipSel,
+            { clipPath: "inset(0 0% 0 0)", duration: 0.75, ease: "expo.out" },
+            t0 + 0.18,
+          );
+          tl.to(sweepSel, { opacity: 0, duration: 0.3, ease: "power2.in" }, t0 + 0.85);
+        }
+        gsap.set("#g3_ph2w", { autoAlpha: 0 });
+        g3_reveal("#g3_ph1", "#g3_sw1", 26, 660);
+        tl.to("#g3_ph1", { opacity: 0.45, duration: 1.5, ease: "sine.inOut" }, 29.059);
+        // rebuild: 0ms swap to the second phrase, then reveal it
+        tl.set("#g3_ph1w", { autoAlpha: 0 }, 36.35);
+        tl.set("#g3_ph2w", { autoAlpha: 1 }, 36.35);
+        g3_reveal("#g3_ph2", "#g3_sw2", 36.35, 480);
+
+        /* ══════════════════════════════════════════════════════════════
+           GROUP CUTS — 0ms, beat_cut pacing
+           ══════════════════════════════════════════════════════════════ */
+        tl.set("#g1", { autoAlpha: 1 }, 0);
+        tl.set("#g2", { autoAlpha: 0 }, 0);
+        tl.set("#g3", { autoAlpha: 0 }, 0);
+        tl.set("#g1", { autoAlpha: 0 }, 9);
+        tl.set("#g2", { autoAlpha: 1 }, 9);
+        tl.set("#g2", { autoAlpha: 0 }, 26);
+        tl.set("#g3", { autoAlpha: 1 }, 26);
+
+        tl.to({}, { duration: 0.001 }, 42); // pin length
+        tl.seek(0);
+        window.__timelines["03-f3"] = tl;
+      })();
+    </script>
+  </div>
+</template>

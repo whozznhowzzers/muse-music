@@ -1,0 +1,312 @@
+<template>
+  
+  <div id="stage" data-composition-id="06-f6" data-width="1080" data-height="1920" data-duration="34">
+    <style>
+      #stage {
+        position: absolute;
+        inset: 0;
+        container-type: size;
+        background: #111111;
+        overflow: hidden;
+      }
+
+      /* ================= g1 — tile-mosaic assembling bar by bar [0,18) ================= */
+      #g1 {
+        position: absolute;
+        inset: 0;
+        background: #111111;
+        opacity: 1;
+        visibility: visible;
+      }
+      .g1_chrome {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        padding: 5.5cqw 5.5cqw 0 5.5cqw;
+        font-family: "IBM Plex Mono", monospace;
+        font-weight: 500;
+        font-size: 0.72cqw;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #888880;
+        z-index: 20;
+      }
+      .g1_mosaicwrap {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+      #g1_mosaic {
+        width: 100%;
+        height: 1400px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: repeat(10, 1fr);
+        gap: 6px;
+        padding: 0 24px;
+      }
+      .g1_tile {
+        border: 1px solid #282826;
+        will-change: transform, opacity;
+      }
+      .g1_wordwrap {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 15;
+      }
+      #g1_stub {
+        width: 36px;
+        height: 2px;
+        background: #E85D26;
+        margin-bottom: 3cqw;
+      }
+      #g1_word {
+        font-family: "Barlow", sans-serif;
+        font-weight: 900;
+        font-size: 13cqw;
+        letter-spacing: -0.04em;
+        line-height: 0.88;
+        color: #F0ECE5;
+        text-transform: lowercase;
+        white-space: nowrap;
+        will-change: transform;
+      }
+
+      /* ================= g2 — hard-cut detonation [18,34) ================= */
+      #g2 {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        visibility: hidden;
+      }
+      #g2_shakestage {
+        position: absolute;
+        inset: 0;
+        will-change: transform;
+      }
+      .g2_panel {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        will-change: opacity;
+      }
+      #g2_p0 { background: #111111; opacity: 1; }
+      #g2_p1 { background: #E85D26; }
+      .g2_word {
+        font-family: "Barlow", sans-serif;
+        font-weight: 900;
+        font-size: 13cqw;
+        letter-spacing: -0.04em;
+        line-height: 0.88;
+        color: #F0ECE5;
+        text-transform: lowercase;
+        white-space: nowrap;
+        will-change: transform;
+      }
+      #g2_p1 .g2_word { color: #111111; }
+      #g2_particles {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 30;
+      }
+      .g2_particle {
+        position: absolute;
+        background: #E85D26;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      #g2_flash {
+        position: absolute;
+        inset: 0;
+        background: #F0ECE5;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 40;
+        will-change: opacity;
+      }
+    </style>
+
+    <!-- g1: tile-mosaic + content-swap -->
+    <div id="g1">
+      <div class="g1_chrome">
+        <span>no. 06</span>
+        <span>bar burn</span>
+      </div>
+      <div class="g1_mosaicwrap">
+        <div id="g1_mosaic"></div>
+      </div>
+      <div class="g1_wordwrap">
+        <div id="g1_stub"></div>
+        <div id="g1_word">ashes</div>
+      </div>
+    </div>
+
+    <!-- g2: hard-cut / flash-cut / particle-burst / screen-shake -->
+    <div id="g2">
+      <div id="g2_shakestage">
+        <div class="g2_panel" id="g2_p0"><div class="g2_word">burn</div></div>
+        <div class="g2_panel" id="g2_p1"><div class="g2_word">burn</div></div>
+        <div id="g2_particles"></div>
+      </div>
+      <div id="g2_flash"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      /* ---------- group visibility: 0ms cut at local t=18 ---------- */
+      tl.set("#g1", { autoAlpha: 1 }, 0);
+      tl.set("#g2", { autoAlpha: 0 }, 0);
+      tl.set("#g1", { autoAlpha: 0 }, 18);
+      tl.set("#g2", { autoAlpha: 1 }, 18);
+      tl.set("#g2", { autoAlpha: 0 }, 34);
+
+      /* ================= g1 — tile-mosaic assembling bar by bar =================
+         tile-mosaic recipe: deterministic palette by index, diagonal reveal order
+         governed by (row + col) per-tile stagger. Three "bar" waves at the three
+         anchors: rows 0-3 / 4-6 / 7-9. density_topology: accumulate. */
+      const g1_mosaic = document.getElementById("g1_mosaic");
+      const COLS = 5;
+      const ROWS = 10;
+      const WAVES = [1.981, 9.249, 16.516];
+      for (let i = 0; i < COLS * ROWS; i++) {
+        const row = Math.floor(i / COLS);
+        const col = i % COLS;
+        const cell = document.createElement("div");
+        cell.className = "g1_tile";
+        const s = row + col;
+        if (s % 8 === 0) cell.style.background = "#E85D26";
+        else if ((row * col) % 11 === 0) cell.style.background = "#505048";
+        else cell.style.background = "#1A1A18";
+        g1_mosaic.appendChild(cell);
+        const wave = row < 4 ? 0 : row < 7 ? 1 : 2;
+        const step = wave === 2 ? 0.08 : 0.12;
+        const t0 = WAVES[wave] + s * step;
+        tl.fromTo(
+          cell,
+          { autoAlpha: 0, scale: 0.6 },
+          { autoAlpha: 1, scale: 1, duration: 0.4, ease: "back.out(1.7)" },
+          t0
+        );
+      }
+
+      /* g1 — content-swap recipe (free-composed): hard 0ms tl.set text swaps at
+         each anchor, deterministic from the copy order ashes -> to -> ashes. */
+      tl.set("#g1_word", { textContent: "ashes" }, 0);
+      const swaps = [
+        { t: 1.981, w: "ashes" },
+        { t: 9.249, w: "to" },
+        { t: 16.516, w: "ashes" }
+      ];
+      swaps.forEach((sw) => {
+        tl.set("#g1_word", { textContent: sw.w }, sw.t);
+        tl.fromTo(
+          "#g1_word",
+          { scale: 1.12 },
+          { scale: 1, duration: 0.28, ease: "power4.out" },
+          sw.t
+        );
+      });
+
+      /* ================= g2 — hard-cut detonation =================
+         Hits (frame-local): 18.00 (stop-start 149), 18.28, 23.27 (154 drop +
+         particle burst), 29.19, 32.79 (164 peak slam + particle burst).
+         hard-cut: 0ms panel swaps. flash-cut: cream flash on the hit, state swap
+         ~2 frames in, flash out ~3 frames. particle-burst: 36 deterministic
+         flat orange squares. screen-shake: steps(1) decaying jolts. */
+      const P0 = "#g2_p0";
+      const P1 = "#g2_p1";
+      const HITS = [
+        { t: 18.0, to: P0, shake: 1.0, burst: false },
+        { t: 18.28, to: P1, shake: 1.0, burst: false },
+        { t: 23.27, to: P0, shake: 1.25, burst: true },
+        { t: 29.19, to: P1, shake: 1.0, burst: false },
+        { t: 32.79, to: P0, shake: 1.6, burst: true }
+      ];
+      const AMPS = [28, -24, 20, -22, 16, -18, 14, -14, 10, -8, 6, -5, 3, -2];
+
+      HITS.forEach((h) => {
+        // flash-cut: instant full-frame flash on the hit
+        tl.set("#g2_flash", { opacity: 1 }, h.t);
+        // hard-cut: swap panel behind the flash (~2 frames at 30fps)
+        tl.set(P0, { opacity: h.to === P0 ? 1 : 0 }, h.t + 0.03);
+        tl.set(P1, { opacity: h.to === P1 ? 1 : 0 }, h.t + 0.03);
+        // flash-cut: snap the flash back out (~3 frames)
+        tl.set("#g2_flash", { opacity: 0 }, h.t + 0.06);
+        // hero punch on the newly revealed word
+        tl.fromTo(
+          h.to + " .g2_word",
+          { scale: 1.14 },
+          { scale: 1, duration: 0.2, ease: "power4.out" },
+          h.t + 0.03
+        );
+        // screen-shake: deterministic decaying jolts
+        AMPS.forEach((a, i) => {
+          tl.to(
+            "#g2_shakestage",
+            { x: a * h.shake, y: a * 0.7 * h.shake * (i % 2 ? -1 : 1), duration: 0.03, ease: "steps(1)" },
+            h.t + 0.02 + i * 0.03
+          );
+        });
+        tl.to(
+          "#g2_shakestage",
+          { x: 0, y: 0, duration: 0.1, ease: "power2.out" },
+          h.t + 0.02 + AMPS.length * 0.03
+        );
+      });
+
+      /* particle-burst recipe: N deterministic particles, golden-angle jitter,
+         radius/speed derived from index only. Shorter flight for the 32.79 slam
+         so everything resolves inside the 34s frame. */
+      const g2_particles = document.getElementById("g2_particles");
+      const BURSTS = [
+        { t: 23.27, durBase: 1.1, durStep: 0.08 },
+        { t: 32.79, durBase: 0.5, durStep: 0.05 }
+      ];
+      BURSTS.forEach((b) => {
+        const N = 36;
+        for (let i = 0; i < N; i++) {
+          const p = document.createElement("div");
+          p.className = "g2_particle";
+          const sz = 6 + (i % 4) * 4;
+          p.style.width = sz + "px";
+          p.style.height = sz + "px";
+          g2_particles.appendChild(p);
+          const angle = (i / N) * Math.PI * 2 + i * 0.137;
+          const radius = 500 + (i % 5) * 90 + (i % 3) * 40;
+          const tx = Math.cos(angle) * radius;
+          const ty = Math.sin(angle) * radius;
+          const dur = b.durBase + (i % 5) * b.durStep;
+          tl.fromTo(
+            p,
+            { x: 0, y: 0, scale: 1, opacity: 1 },
+            { x: tx, y: ty, scale: 0, opacity: 0, duration: dur, ease: "expo.out" },
+            b.t + 0.05 + (i % 6) * 0.012
+          );
+        }
+      });
+
+      window.__timelines["06-f6"] = tl;
+      tl.seek(0);
+    </script>
+  </div>
+</template>

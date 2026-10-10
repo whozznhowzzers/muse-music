@@ -1,0 +1,497 @@
+<template id="tpl-01-f1">
+
+<style>
+  #f1_stage {
+    container-type: size;
+    position: relative;
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+    background: #111111;
+  }
+  #f1_stage * { margin: 0; padding: 0; box-sizing: border-box; }
+  .f1-group {
+    position: absolute;
+    inset: 0;
+    width: 1080px;
+    height: 1920px;
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+  }
+  .f1-canvas { position: absolute; inset: 0; width: 1080px; height: 1920px; display: block; }
+
+  /* ── g1: held message over the living field ─────────────────────────── */
+  .f1-g1-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3cqw;
+    text-align: center;
+    pointer-events: none;
+  }
+  #g1_tag {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 500;
+    font-size: 1.1cqw;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #e85d26;
+    opacity: 0;
+  }
+  #g1_mark {
+    font-family: "Barlow", system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 7.5cqw;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+    color: #f0ece5;
+    text-transform: lowercase;
+    white-space: nowrap;
+    opacity: 0;
+  }
+  .f1-g1-letter { display: inline-block; will-change: transform, opacity; }
+  #g1_rule {
+    width: 36px;
+    height: 2px;
+    background: #e85d26;
+    opacity: 0;
+  }
+
+  /* ── g2: flow field + typewriter reveal ─────────────────────────────── */
+  .f1-g2-stage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  #g2_line {
+    display: flex;
+    align-items: baseline;
+    font-family: "Barlow", system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 13cqw;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    color: #f0ece5;
+    text-transform: lowercase;
+    white-space: nowrap;
+  }
+  .f1-g2-char { display: inline-block; opacity: 0; will-change: opacity; }
+  #g2_caret {
+    display: inline-block;
+    width: 0.09em;
+    height: 0.86em;
+    margin-left: 0.06em;
+    background: #e85d26;
+    opacity: 0;
+    will-change: opacity;
+  }
+</style>
+
+<div
+  id="f1_stage"
+  data-composition-id="01-f1"
+  data-width="1080"
+  data-height="1920"
+  data-start="0"
+  data-duration="23"
+>
+  <!-- Group g1 — held-message-living-field fork, frame-local [0, 14) -->
+  <div class="f1-group" id="g1_01-f1">
+    <canvas class="f1-canvas" id="g1_canvas" width="1080" height="1920"></canvas>
+    <div class="f1-g1-overlay" id="g1_overlay">
+      <div id="g1_tag">a beat-synced video</div>
+      <div id="g1_mark" aria-label="that moment hit"></div>
+      <div id="g1_rule"></div>
+    </div>
+  </div>
+
+  <!-- Group g2 — flow-field bed + typewriter reveal, frame-local [14, 23) -->
+  <div class="f1-group" id="g2_01-f1">
+    <canvas class="f1-canvas" id="g2_canvas" width="1080" height="1920"></canvas>
+    <div class="f1-g2-stage">
+      <div id="g2_line" aria-label="listen"><span id="g2_caret"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Shared deterministic WebGL flow field (forked from bg-flow-field) ──
+  window.__hf_01f1 = window.__hf_01f1 || {};
+
+  var FLOW_VERT = [
+    "attribute vec2 position;",
+    "varying vec2 vUv;",
+    "void main(){",
+    "  vUv = position * 0.5 + 0.5;",
+    "  gl_Position = vec4(position, 0.0, 1.0);",
+    "}",
+  ].join("\n");
+
+  var FLOW_FRAG = [
+    "precision highp float;",
+    "varying vec2 vUv;",
+    "uniform float uTime;",
+    "uniform float uPhase;",
+    "uniform float uReveal;",
+    "uniform float uChromAb;",
+    "uniform float uVignette;",
+    "uniform float uIntensity;",
+    "uniform float uSpeed;",
+    "uniform vec2  uResolution;",
+    "uniform vec3  uColLow;",
+    "uniform vec3  uColMid;",
+    "uniform vec3  uColHigh;",
+    "uniform vec3  uAccent;",
+    "float hash21(vec2 p){",
+    "  p = fract(p * vec2(123.34, 456.21));",
+    "  p += dot(p, p + 45.32);",
+    "  return fract(p.x * p.y);",
+    "}",
+    "float noise2(vec2 p){",
+    "  vec2 i = floor(p);",
+    "  vec2 f = fract(p);",
+    "  vec2 u = f * f * (3.0 - 2.0 * f);",
+    "  float a = hash21(i);",
+    "  float b = hash21(i + vec2(1.0, 0.0));",
+    "  float c = hash21(i + vec2(0.0, 1.0));",
+    "  float d = hash21(i + vec2(1.0, 1.0));",
+    "  return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);",
+    "}",
+    "float fbm(vec2 p){",
+    "  float v = 0.0;",
+    "  float a = 0.5;",
+    "  for(int i=0;i<5;i++){",
+    "    v += a * noise2(p);",
+    "    p *= 2.02;",
+    "    a *= 0.5;",
+    "  }",
+    "  return v;",
+    "}",
+    "vec2 curl(vec2 p, float t){",
+    "  float e = 0.6;",
+    "  float n1 = fbm(p + vec2(0.0,  e) + t*0.18);",
+    "  float n2 = fbm(p + vec2(0.0, -e) + t*0.18);",
+    "  float n3 = fbm(p + vec2( e, 0.0) + t*0.18);",
+    "  float n4 = fbm(p + vec2(-e, 0.0) + t*0.18);",
+    "  return vec2(n1 - n2, -(n3 - n4));",
+    "}",
+    "vec3 palette(float t){",
+    "  t = clamp(t, 0.0, 1.0);",
+    "  vec3 lowMid = mix(uColLow, uColMid, smoothstep(0.0, 0.5, t));",
+    "  return mix(lowMid, uColHigh, smoothstep(0.5, 1.0, t));",
+    "}",
+    "vec3 sampleField(vec2 uv, float t, float energy){",
+    "  vec2 p = (uv - 0.5) * vec2(uResolution.x/uResolution.y, 1.0) * 2.4;",
+    "  vec2 c = curl(p * 0.9, t);",
+    "  vec2 q = p + c * (0.45 + 0.55 * energy);",
+    "  float flow = fbm(q * 1.6 + vec2(t * 0.11, -t * 0.07));",
+    "  float bands = sin(flow * 14.0 + t * 1.1);",
+    "  bands = smoothstep(0.0, 1.0, 0.5 + 0.5 * bands);",
+    "  float r = length(p);",
+    "  float core = smoothstep(1.5, 0.05, r) * (0.6 + 0.4 * energy);",
+    "  float glow = exp(-r * 1.6) * (0.55 + 0.45 * energy);",
+    "  float k = clamp(flow * 0.85 + 0.15 * bands + 0.25 * core + 0.6 * glow, 0.0, 1.4);",
+    "  vec3 col = palette(k * 0.9 + 0.1 * sin(t * 0.4));",
+    "  col *= 0.7 + 0.6 * energy;",
+    "  col += uAccent * core * 0.55;",
+    "  return col;",
+    "}",
+    "void main(){",
+    "  vec2 uv = vUv;",
+    "  float t = uTime * uSpeed;",
+    "  float e = uIntensity;",
+    "  vec2 dir = normalize(uv - 0.5 + 1e-6);",
+    "  float ca = uChromAb * (0.004 + 0.012 * length(uv - 0.5));",
+    "  vec3 cR = sampleField(uv + dir * ca, t, e);",
+    "  vec3 cG = sampleField(uv,            t, e);",
+    "  vec3 cB = sampleField(uv - dir * ca, t, e);",
+    "  vec3 col = vec3(cR.r, cG.g, cB.b);",
+    "  float lum = dot(col, vec3(0.299, 0.587, 0.114));",
+    "  col = mix(vec3(lum), col, 1.05);",
+    "  float rev = uReveal;",
+    "  float sweep = smoothstep(0.0, 0.6, rev) * (1.0 - smoothstep(0.6, 1.0, rev));",
+    "  col += uColHigh * sweep * 0.35;",
+    "  vec3 phaseTint = mix(vec3(0.85, 0.92, 1.05), vec3(1.05, 0.95, 0.85), uPhase);",
+    "  col *= phaseTint;",
+    "  float v = length(uv - 0.5);",
+    "  col *= 1.0 - smoothstep(0.45, 0.95, v) * uVignette;",
+    "  col = col / (col + 1.0);",
+    "  col = pow(col, vec3(1.0/2.2));",
+    "  gl_FragColor = vec4(col, 1.0);",
+    "}",
+  ].join("\n");
+
+  function f1_hexLin(hex) {
+    var h = String(hex).replace("#", "").trim();
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var r = parseInt(h.substr(0, 2), 16) / 255;
+    var g = parseInt(h.substr(2, 2), 16) / 255;
+    var b = parseInt(h.substr(4, 2), 16) / 255;
+    var lin = function (c) { return Math.pow(c, 2.2); };
+    return [lin(r), lin(g), lin(b)];
+  }
+
+  window.__hf_01f1.f1_makeField = function (canvasId, palette, speed) {
+    var canvas = document.getElementById(canvasId);
+    var u = {
+      uTime: { value: 0 },
+      uPhase: { value: 0.1 },
+      uReveal: { value: 0 },
+      uChromAb: { value: 0 },
+      uVignette: { value: 0 },
+      uIntensity: { value: 0.28 },
+    };
+    var render = function () {}; // replaced below if GL is available
+    try {
+      var gl = canvas.getContext("webgl", {
+        antialias: false,
+        alpha: false,
+        preserveDrawingBuffer: true,
+      });
+      if (!gl) return { u: u, render: render, ok: false };
+      var compile = function (type, src) {
+        var s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        return s;
+      };
+      var prog = gl.createProgram();
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, FLOW_VERT));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FLOW_FRAG));
+      gl.linkProgram(prog);
+      gl.useProgram(prog);
+      var buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      var posLoc = gl.getAttribLocation(prog, "position");
+      gl.enableVertexAttribArray(posLoc);
+      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+      gl.viewport(0, 0, 1080, 1920);
+      var L = function (n) { return gl.getUniformLocation(prog, n); };
+      var uLoc = {
+        uTime: L("uTime"), uPhase: L("uPhase"), uReveal: L("uReveal"),
+        uChromAb: L("uChromAb"), uVignette: L("uVignette"),
+        uIntensity: L("uIntensity"), uSpeed: L("uSpeed"),
+        uResolution: L("uResolution"), uColLow: L("uColLow"),
+        uColMid: L("uColMid"), uColHigh: L("uColHigh"), uAccent: L("uAccent"),
+      };
+      var cLow = f1_hexLin(palette.low);
+      var cMid = f1_hexLin(palette.mid);
+      var cHigh = f1_hexLin(palette.high);
+      var cAcc = f1_hexLin(palette.accent);
+      render = function () {
+        gl.uniform1f(uLoc.uTime, u.uTime.value);
+        gl.uniform1f(uLoc.uPhase, u.uPhase.value);
+        gl.uniform1f(uLoc.uReveal, u.uReveal.value);
+        gl.uniform1f(uLoc.uChromAb, u.uChromAb.value);
+        gl.uniform1f(uLoc.uVignette, u.uVignette.value);
+        gl.uniform1f(uLoc.uIntensity, u.uIntensity.value);
+        gl.uniform1f(uLoc.uSpeed, speed);
+        gl.uniform2f(uLoc.uResolution, 1080, 1920);
+        gl.uniform3fv(uLoc.uColLow, cLow);
+        gl.uniform3fv(uLoc.uColMid, cMid);
+        gl.uniform3fv(uLoc.uColHigh, cHigh);
+        gl.uniform3fv(uLoc.uAccent, cAcc);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      };
+      render();
+      return { u: u, render: render, ok: true };
+    } catch (err) {
+      return { u: u, render: render, ok: false };
+    }
+  }
+</script>
+
+<script>
+  // ── g1 setup: held-message-living-field fork ──
+  (function () {
+    var ns = window.__hf_01f1;
+
+    // markText "that moment hit" -> per-letter spans (deterministic split)
+    var mark = document.getElementById("g1_mark");
+    var letters = [];
+    String("that moment hit").split("").forEach(function (ch) {
+      var s = document.createElement("span");
+      s.className = "f1-g1-letter";
+      s.textContent = ch;
+      mark.appendChild(s);
+      letters.push(s);
+    });
+    ns.g1_letters = letters;
+    ns.g1_tag = document.getElementById("g1_tag");
+    ns.g1_rule = document.getElementById("g1_rule");
+    ns.g1_overlay = document.getElementById("g1_overlay");
+    ns.g1_mark = mark;
+
+    // params palette ["#111111","#E85D26","#F0ECE5"], flowSpeed "slow" -> 0.5
+    ns.g1_field = ns.f1_makeField(
+      "g1_canvas",
+      { low: "#1A1A18", mid: "#888880", high: "#F0ECE5", accent: "#E85D26" },
+      0.5,
+    );
+  })();
+</script>
+
+<script>
+  // ── g2 setup: flow-field bed + typewriter reveal ──
+  (function () {
+    var ns = window.__hf_01f1;
+
+    ns.g2_field = ns.f1_makeField(
+      "g2_canvas",
+      { low: "#1A1A18", mid: "#888880", high: "#F0ECE5", accent: "#E85D26" },
+      0.5,
+    );
+
+    // "listen" chars + caret, deterministic split, inserted before the caret
+    var line = document.getElementById("g2_line");
+    var caret = document.getElementById("g2_caret");
+    var chars = [];
+    String("listen").split("").forEach(function (ch) {
+      var s = document.createElement("span");
+      s.className = "f1-g2-char";
+      s.textContent = ch;
+      line.insertBefore(s, caret);
+      chars.push(s);
+    });
+    ns.g2_chars = chars;
+    ns.g2_caret = caret;
+    ns.g2_line = line;
+  })();
+</script>
+
+<script>
+  // ── 01-f1 timeline: one paused gsap timeline, frame-local 0..23 ──
+  (function () {
+    var ns = window.__hf_01f1;
+
+    window.__timelines = window.__timelines || {};
+    var tl = gsap.timeline({ paused: true });
+
+    // Group visibility: g1 [0,14), g2 [14,23) — 0ms cuts
+    tl.set("#g1_01-f1", { autoAlpha: 1 }, 0);
+    tl.set("#g1_01-f1", { autoAlpha: 0 }, 14);
+    tl.set("#g2_01-f1", { autoAlpha: 1 }, 14);
+    tl.set("#g2_01-f1", { autoAlpha: 0 }, 23);
+
+    // ── g1 [0,14): sparse sub-bass pulses surfacing from silence ──
+    var g1 = ns.g1_field;
+    tl.to(g1.u.uTime, { value: 14, duration: 14, ease: "none" }, 0);
+
+    // sub-bass pulse envelope: three soft swells, sinking back into silence
+    tl.to(g1.u.uIntensity, { value: 0.55, duration: 2.2, ease: "sine.inOut" }, 0);
+    tl.to(g1.u.uIntensity, { value: 0.28, duration: 2.6, ease: "sine.inOut" }, 2.2);
+    tl.to(g1.u.uIntensity, { value: 0.62, duration: 2.0, ease: "sine.inOut" }, 6.0);
+    tl.to(g1.u.uIntensity, { value: 0.28, duration: 2.4, ease: "sine.inOut" }, 8.0);
+    tl.to(g1.u.uIntensity, { value: 0.50, duration: 2.0, ease: "sine.inOut" }, 10.6);
+    tl.to(g1.u.uIntensity, { value: 0.22, duration: 1.4, ease: "sine.inOut" }, 12.6);
+
+    // light-leak chromatic aberration, riding the pulses lightly
+    tl.to(g1.u.uChromAb, { value: 0.28, duration: 3.0, ease: "sine.in" }, 0);
+    tl.to(g1.u.uChromAb, { value: 0.18, duration: 6.0, ease: "sine.inOut" }, 5.0);
+    tl.to(g1.u.uChromAb, { value: 0.12, duration: 3.0, ease: "sine.inOut" }, 11.0);
+
+    // dreamy vignette settles in
+    tl.to(g1.u.uVignette, { value: 0.60, duration: 6.0, ease: "power2.out" }, 0);
+
+    // colour-temperature drift
+    tl.to(g1.u.uPhase, { value: 0.45, duration: 7.0, ease: "sine.inOut" }, 1.0);
+    tl.to(g1.u.uPhase, { value: 0.18, duration: 6.0, ease: "sine.inOut" }, 8.0);
+
+    // held message: mark letters rise per-letter, tag + rule fade in
+    tl.fromTo(
+      ns.g1_mark,
+      { opacity: 0, scale: 1.12, filter: "blur(18px)" },
+      { opacity: 1, scale: 1.0, filter: "blur(0px)", duration: 1.1, ease: "power3.out" },
+      2.0,
+    );
+    tl.fromTo(
+      ns.g1_letters,
+      { y: 70 },
+      { y: 0, duration: 1.1, ease: "expo.out", stagger: 0.09 },
+      2.0,
+    );
+    tl.fromTo(
+      ns.g1_tag,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.9, ease: "sine.out" },
+      3.6,
+    );
+    tl.fromTo(
+      ns.g1_rule,
+      { opacity: 0 },
+      { opacity: 0.9, duration: 0.7, ease: "sine.out" },
+      4.0,
+    );
+
+    // slow breathing drift while the message holds
+    tl.to(ns.g1_mark, { scale: 1.03, duration: 7.0, ease: "sine.inOut" }, 7.0);
+
+    // settle back into silence ahead of the cut at 14
+    tl.to(ns.g1_overlay, { opacity: 0, duration: 0.6, ease: "power1.in" }, 13.4);
+
+    // ── g2 [14,23): groove flickers on, "listen" types at 16.602 ──
+    var g2 = ns.g2_field;
+    tl.to(g2.u.uTime, { value: 9, duration: 9, ease: "none" }, 14);
+
+    // energy: settle-in -> breathe -> surge at the reveal -> settle dark
+    tl.to(g2.u.uIntensity, { value: 0.60, duration: 1.2, ease: "sine.inOut" }, 14);
+    tl.to(g2.u.uIntensity, { value: 1.00, duration: 0.8, ease: "power2.in" }, 15.8);
+    tl.to(g2.u.uIntensity, { value: 0.30, duration: 2.1, ease: "power2.out" }, 16.9);
+    tl.to(g2.u.uIntensity, { value: 0.30, duration: 3.1, ease: "none" }, 19.9);
+
+    // chromatic light-leak spikes on the surge, then settles
+    tl.to(g2.u.uChromAb, { value: 0.35, duration: 1.4, ease: "sine.in" }, 14);
+    tl.to(g2.u.uChromAb, { value: 1.20, duration: 0.5, ease: "power3.in" }, 16.1);
+    tl.to(g2.u.uChromAb, { value: 0.18, duration: 1.6, ease: "power2.out" }, 16.9);
+
+    // brief highlight sweep across the reveal
+    tl.fromTo(g2.u.uReveal, { value: 0 }, { value: 1, duration: 0.7, ease: "none" }, 16.2);
+    tl.set(g2.u.uReveal, { value: 0 }, 17.0);
+
+    // colour-temperature drift
+    tl.to(g2.u.uPhase, { value: 0.60, duration: 2.0, ease: "sine.inOut" }, 14.5);
+    tl.to(g2.u.uPhase, { value: 0.15, duration: 3.0, ease: "sine.inOut" }, 18.0);
+
+    // settle the field to near-black for the hold
+    tl.to(g2.u.uVignette, { value: 0.75, duration: 2.0, ease: "power2.out" }, 17.0);
+
+    // typewriter reveal of "listen" at frame-local 16.602 (g2-local offset 2.602)
+    var step = 0.07;
+    ns.g2_chars.forEach(function (ch, i) {
+      tl.set(ch, { opacity: 1 }, 16.602 + i * step);
+    });
+    var lastT = 16.602 + (ns.g2_chars.length - 1) * step;
+    tl.set(ns.g2_caret, { opacity: 1 }, 16.602);
+    tl.to(
+      ns.g2_caret,
+      { opacity: 0, duration: 0.12, ease: "steps(1)", repeat: 5, yoyo: true },
+      lastT + step,
+    );
+    tl.set(ns.g2_caret, { opacity: 0 }, 19.2);
+
+    // hold, then clear the field for the outgoing cut
+    tl.to(ns.g2_line, { opacity: 0, duration: 0.5, ease: "power1.in" }, 22.5);
+
+    // Field repaints are driven by the timeline (seek-safe, no rAF):
+    // only the visible group's canvas is repainted per tick.
+    tl.eventCallback("onUpdate", function () {
+      if (tl.time() < 14) {
+        ns.g1_field.render();
+      } else {
+        ns.g2_field.render();
+      }
+    });
+
+    window.__timelines["01-f1"] = tl;
+    tl.seek(0);
+  })();
+</script>
+</template>

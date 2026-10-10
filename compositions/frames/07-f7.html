@@ -1,0 +1,422 @@
+<template>
+  
+  <script src="vendor/three.min.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #stage {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #111111;
+      container-type: size;
+    }
+    .g1-field {
+      position: absolute;
+      inset: 0;
+    }
+    .g1-canvas {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      display: block;
+    }
+    .g1-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2.6cqw;
+      text-align: center;
+      pointer-events: none;
+    }
+    .g1-mark {
+      font-family: "Barlow", system-ui, sans-serif;
+      font-size: 10cqw;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      display: flex;
+      gap: 0;
+      opacity: 0;
+      color: #f0ece5;
+    }
+    .g1-mark-letter {
+      display: inline-block;
+      background: linear-gradient(180deg, #f0ece5 0%, #888880 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      transform: translateY(0);
+      white-space: pre;
+    }
+    .g1-rule {
+      width: 0;
+      height: 2px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(240, 236, 229, 0.9) 50%,
+        transparent 100%
+      );
+      opacity: 0;
+    }
+    .g1-title {
+      display: none;
+    }
+    .g1-tag {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 1.7cqw;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #888880;
+      opacity: 0;
+      padding: 0 5.5cqw;
+    }
+    .g1-grain {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.06;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    }
+  </style>
+  <div
+    id="stage"
+    data-composition-id="07-f7"
+    data-width="1080"
+    data-height="1920"
+    data-duration="8.2"
+  >
+    <div id="g1" class="g1-field clip" data-start="0" data-duration="8.2" data-track-index="0">
+      <div id="g1_inner">
+        <canvas class="g1-canvas" width="1080" height="1920"></canvas>
+        <div class="g1-overlay">
+          <div class="g1-mark"><!-- letters injected from markText --></div>
+          <div class="g1-rule"></div>
+          <div class="g1-title"></div>
+          <div class="g1-tag"></div>
+        </div>
+        <div class="g1-grain"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      // ── Fork of held-message-living-field, frame 07-f7 (final frame) ──
+      // markText "that moment hit" · tagText "fin" · palette #111111/#888880/#F0ECE5
+      // Local time 0–8.2s. Feel: drop's aftermath — hard-stop impact at t=0,
+      // intimate ticks (roll 1.86–2.44, tick 5.0) dissolving into silence.
+      var vars = {
+        bgColor: "#111111",
+        colorLow: "#111111",
+        colorMid: "#888880",
+        colorHigh: "#F0ECE5",
+        accentColor: "#888880",
+        markText: "that moment hit",
+        titleText: "",
+        tagText: "fin",
+        flowSpeed: 0.35,
+      };
+
+      function hexToLinear(hex) {
+        var h = String(hex).replace("#", "").trim();
+        if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+        var r = parseInt(h.substr(0, 2), 16) / 255;
+        var g = parseInt(h.substr(2, 2), 16) / 255;
+        var b = parseInt(h.substr(4, 2), 16) / 255;
+        var lin = function (c) {
+          return Math.pow(c, 2.2);
+        };
+        return new THREE.Vector3(lin(r), lin(g), lin(b));
+      }
+
+      var stage = document.getElementById("stage");
+      var canvas = stage.querySelector(".g1-canvas");
+      var W = 1080;
+      var H = 1920;
+
+      // ── DOM: mark letters, tag text ──────────────────────────────────
+      var markEl = stage.querySelector(".g1-mark");
+      markEl.innerHTML = "";
+      String(vars.markText)
+        .split("")
+        .forEach(function (ch) {
+          var span = document.createElement("span");
+          span.className = "g1-mark-letter";
+          span.textContent = ch === " " ? "\u00A0" : ch;
+          markEl.appendChild(span);
+        });
+      stage.querySelector(".g1-tag").textContent = vars.tagText;
+
+      // ── WebGL living field (same shader recipe, 1080x1920) ──────────
+      var renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+        antialias: false,
+        alpha: false,
+        preserveDrawingBuffer: true,
+      });
+      renderer.setPixelRatio(1);
+      renderer.setSize(W, H, false);
+
+      var scene = new THREE.Scene();
+      var camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+      var uniforms = {
+        uTime: { value: 0.0 },
+        uPhase: { value: 0.0 },
+        uReveal: { value: 0.0 },
+        uChromAb: { value: 0.0 },
+        uVignette: { value: 0.0 },
+        uIntensity: { value: 1.0 },
+        uResolution: { value: new THREE.Vector2(W, H) },
+        uSpeed: { value: Number(vars.flowSpeed) || 1.0 },
+        uColLow: { value: hexToLinear(vars.colorLow) },
+        uColMid: { value: hexToLinear(vars.colorMid) },
+        uColHigh: { value: hexToLinear(vars.colorHigh) },
+        uAccent: { value: hexToLinear(vars.accentColor) },
+      };
+
+      var vert = [
+        "varying vec2 vUv;",
+        "void main(){",
+        "  vUv = uv;",
+        "  gl_Position = vec4(position.xy, 0.0, 1.0);",
+        "}",
+      ].join("\n");
+
+      var frag = [
+        "precision highp float;",
+        "varying vec2 vUv;",
+        "uniform float uTime;",
+        "uniform float uPhase;",
+        "uniform float uReveal;",
+        "uniform float uChromAb;",
+        "uniform float uVignette;",
+        "uniform float uIntensity;",
+        "uniform float uSpeed;",
+        "uniform vec2  uResolution;",
+        "uniform vec3  uColLow;",
+        "uniform vec3  uColMid;",
+        "uniform vec3  uColHigh;",
+        "uniform vec3  uAccent;",
+
+        "float hash21(vec2 p){",
+        "  p = fract(p * vec2(123.34, 456.21));",
+        "  p += dot(p, p + 45.32);",
+        "  return fract(p.x * p.y);",
+        "}",
+
+        "float noise2(vec2 p){",
+        "  vec2 i = floor(p);",
+        "  vec2 f = fract(p);",
+        "  vec2 u = f * f * (3.0 - 2.0 * f);",
+        "  float a = hash21(i);",
+        "  float b = hash21(i + vec2(1.0, 0.0));",
+        "  float c = hash21(i + vec2(0.0, 1.0));",
+        "  float d = hash21(i + vec2(1.0, 1.0));",
+        "  return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);",
+        "}",
+
+        "float fbm(vec2 p){",
+        "  float v = 0.0;",
+        "  float a = 0.5;",
+        "  for(int i=0;i<5;i++){",
+        "    v += a * noise2(p);",
+        "    p *= 2.02;",
+        "    a *= 0.5;",
+        "  }",
+        "  return v;",
+        "}",
+
+        "vec2 curl(vec2 p, float t){",
+        "  float e = 0.6;",
+        "  float n1 = fbm(p + vec2(0.0,  e) + t*0.18);",
+        "  float n2 = fbm(p + vec2(0.0, -e) + t*0.18);",
+        "  float n3 = fbm(p + vec2( e, 0.0) + t*0.18);",
+        "  float n4 = fbm(p + vec2(-e, 0.0) + t*0.18);",
+        "  return vec2(n1 - n2, -(n3 - n4));",
+        "}",
+
+        "vec3 palette(float t){",
+        "  t = clamp(t, 0.0, 1.0);",
+        "  vec3 lowMid = mix(uColLow, uColMid, smoothstep(0.0, 0.5, t));",
+        "  return mix(lowMid, uColHigh, smoothstep(0.5, 1.0, t));",
+        "}",
+
+        "vec3 sampleField(vec2 uv, float t, float energy){",
+        "  vec2 p = (uv - 0.5) * vec2(uResolution.x/uResolution.y, 1.0) * 2.4;",
+        "  vec2 c = curl(p * 0.9, t);",
+        "  vec2 q = p + c * (0.45 + 0.55 * energy);",
+
+        "  float flow = fbm(q * 1.6 + vec2(t * 0.11, -t * 0.07));",
+        "  float bands = sin(flow * 14.0 + t * 1.1);",
+        "  bands = smoothstep(0.0, 1.0, 0.5 + 0.5 * bands);",
+
+        "  float r = length(p);",
+        "  float core = smoothstep(1.5, 0.05, r) * (0.6 + 0.4 * energy);",
+        "  float glow = exp(-r * 1.6) * (0.55 + 0.45 * energy);",
+
+        "  float k = clamp(flow * 0.85 + 0.15 * bands + 0.25 * core + 0.6 * glow, 0.0, 1.4);",
+        "  vec3 col = palette(k * 0.9 + 0.1 * sin(t * 0.4));",
+        "  col *= 0.7 + 0.6 * energy;",
+        "  col += uAccent * core * 0.55;",
+        "  return col;",
+        "}",
+
+        "void main(){",
+        "  vec2 uv = vUv;",
+        "  float t = uTime * uSpeed;",
+        "  float e = uIntensity;",
+
+        "  vec2 dir = normalize(uv - 0.5 + 1e-6);",
+        "  float ca = uChromAb * (0.004 + 0.012 * length(uv - 0.5));",
+        "  vec3 cR = sampleField(uv + dir * ca,        t, e);",
+        "  vec3 cG = sampleField(uv,                   t, e);",
+        "  vec3 cB = sampleField(uv - dir * ca,        t, e);",
+        "  vec3 col = vec3(cR.r, cG.g, cB.b);",
+
+        "  float lum = dot(col, vec3(0.299, 0.587, 0.114));",
+        "  col = mix(vec3(lum), col, 1.05);",
+
+        "  float rev = uReveal;",
+        "  float sweep = smoothstep(0.0, 0.6, rev) * (1.0 - smoothstep(0.6, 1.0, rev));",
+        "  col += uColHigh * sweep * 0.35;",
+
+        "  vec3 phaseTint = mix(vec3(0.85, 0.92, 1.05), vec3(1.05, 0.95, 0.85), uPhase);",
+        "  col *= phaseTint;",
+
+        "  float v = length(uv - 0.5);",
+        "  col *= 1.0 - smoothstep(0.45, 0.95, v) * uVignette;",
+
+        "  col = col / (col + 1.0);",
+        "  col = pow(col, vec3(1.0/2.2));",
+
+        "  gl_FragColor = vec4(col, 1.0);",
+        "}",
+      ].join("\n");
+
+      var mat = new THREE.ShaderMaterial({
+        uniforms: uniforms,
+        vertexShader: vert,
+        fragmentShader: frag,
+      });
+      var mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
+      scene.add(mesh);
+
+      function renderFrame() {
+        renderer.render(scene, camera);
+      }
+      renderFrame();
+
+      // Fresh pixels for snapshots; every visible value is uniform-driven,
+      // so output is fully determined by the GSAP timeline (seek-safe).
+      // Repaints ride the timeline's onUpdate — no wall-clock rAF loop.
+      renderFrame();
+
+      // ── Deterministic timeline (0–8.2s), host global gsap ────────────
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true, onUpdate: renderFrame });
+
+      var g1 = stage.querySelector("#g1");
+      var g1inner = stage.querySelector("#g1_inner");
+      var mark = stage.querySelector(".g1-mark");
+      var letters = stage.querySelectorAll(".g1-mark-letter");
+      var rule = stage.querySelector(".g1-rule");
+      var tag = stage.querySelector(".g1-tag");
+
+      // Group spans the whole frame (inner wrapper — #g1 is framework-managed).
+      tl.set(g1inner, { autoAlpha: 1 }, 0);
+      tl.set(g1inner, { autoAlpha: 0 }, 8.2);
+
+      // Flow-field clock.
+      tl.to(uniforms.uTime, { value: 8.2, duration: 8.2, ease: "none" }, 0);
+
+      // Intensity: hard-stop impact at t=0, decays through the intimate
+      // stretch, ticks up at the accel-roll (1.86) and the 170 hard stop
+      // (5.0), then settles into near-dark by the end.
+      tl.to(uniforms.uIntensity, { value: 0.28, duration: 1.6, ease: "power2.out" }, 0);
+      tl.to(uniforms.uIntensity, { value: 0.5, duration: 0.4, ease: "sine.in" }, 1.86);
+      tl.to(uniforms.uIntensity, { value: 0.22, duration: 1.8, ease: "sine.inOut" }, 2.44);
+      tl.to(uniforms.uIntensity, { value: 0.62, duration: 0.9, ease: "sine.in" }, 4.1);
+      tl.to(uniforms.uIntensity, { value: 0.18, duration: 0.6, ease: "power2.out" }, 5.0);
+      tl.to(uniforms.uIntensity, { value: 0.06, duration: 2.6, ease: "sine.inOut" }, 5.6);
+
+      // Chromatic aberration: impact flash, roll flicker, then calm.
+      tl.fromTo(uniforms.uChromAb, { value: 0.0 }, { value: 1.4, duration: 0.18, ease: "power3.in" }, 0);
+      tl.to(uniforms.uChromAb, { value: 0.2, duration: 0.7, ease: "power2.out" }, 0.18);
+      tl.to(uniforms.uChromAb, { value: 0.9, duration: 0.3, ease: "sine.in" }, 1.86);
+      tl.to(uniforms.uChromAb, { value: 0.15, duration: 0.8, ease: "sine.out" }, 2.44);
+      tl.to(uniforms.uChromAb, { value: 0.45, duration: 0.2, ease: "power2.in" }, 5.0);
+      tl.to(uniforms.uChromAb, { value: 0.08, duration: 3.0, ease: "sine.inOut" }, 5.2);
+
+      // Reveal sweep — the impact flash.
+      tl.fromTo(uniforms.uReveal, { value: 0.0 }, { value: 1.0, duration: 0.5, ease: "none" }, 0.12);
+      tl.set(uniforms.uReveal, { value: 0.0 }, 0.8);
+
+      // Slow phase drift + vignette that swallows the field at the end.
+      tl.to(uniforms.uPhase, { value: 0.15, duration: 8.2, ease: "sine.inOut" }, 0);
+      tl.to(uniforms.uVignette, { value: 0.85, duration: 4.0, ease: "power2.out" }, 4.2);
+
+      // Mark: letter burst in from the hard stop, then resolves and settles.
+      tl.fromTo(
+        mark,
+        {
+          opacity: 0,
+          scale: 1.14,
+          filter: "blur(22px) drop-shadow(0 0 60px rgba(240,236,229,0.35))",
+        },
+        {
+          opacity: 1,
+          scale: 1.0,
+          filter: "blur(0px) drop-shadow(0 0 70px rgba(240,236,229,0.45))",
+          duration: 0.8,
+          ease: "power3.out",
+        },
+        0.25,
+      );
+      tl.fromTo(
+        letters,
+        { y: 64 },
+        { y: 0, duration: 1.05, ease: "expo.out", stagger: 0.06 },
+        0.25,
+      );
+      // The settle: mark breathes to 1.03 across the middle, rests at 1.0.
+      tl.to(mark, { scale: 1.03, duration: 2.8, ease: "sine.inOut" }, 4.0);
+      tl.to(mark, { scale: 1.0, duration: 1.0, ease: "sine.inOut" }, 6.8);
+
+      // Rule opens under the mark during the roll.
+      tl.fromTo(
+        rule,
+        { width: 0, opacity: 0 },
+        { width: 320, opacity: 0.85, duration: 0.8, ease: "power2.out" },
+        1.6,
+      );
+
+      // Tag "fin" arrives as the intimate stretch starts.
+      tl.fromTo(
+        tag,
+        { opacity: 0, y: 14 },
+        { opacity: 0.8, y: 0, duration: 0.9, ease: "sine.out" },
+        2.8,
+      );
+
+      // Dissolve into silence: everything leaves before the end.
+      tl.to([mark, rule, tag], { opacity: 0, duration: 1.4, ease: "power1.inOut" }, 6.4);
+
+      window.__timelines["07-f7"] = tl;
+      tl.seek(0);
+    })();
+  </script>
+</template>
