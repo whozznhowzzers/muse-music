@@ -1,4 +1,4 @@
-1name: Render Music Video
+name: Render Music Video
 on:
   workflow_dispatch:
 
